@@ -3,10 +3,6 @@ name: iOS Build
 on:
   workflow_dispatch:
     inputs:
-      demoMode:
-        description: Run in demo mode (no build/signing, create placeholder IPA)
-        required: false
-        default: 'false'
       environment:
         description: Deployment environment (tst|acc|store)
         required: true
@@ -49,7 +45,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Select Xcode version (optional)
-        if: ${{ inputs.demoMode != 'true' && inputs.xcodeVersion != '' }}
+        if: ${{ inputs.xcodeVersion != '' }}
         run: |
           sudo xcode-select -s "/Applications/${{ inputs.xcodeVersion }}"
           xcodebuild -version
@@ -60,39 +56,32 @@ jobs:
           node-version: '20'
 
       - name: Install npm dependencies
-        if: ${{ inputs.demoMode != 'true' }}
-        run: npm ci --legacy-peer-deps || true
+        run: npm ci --legacy-peer-deps
 
       - name: Pre-build adjustments
-        if: ${{ inputs.demoMode != 'true' }}
-        run: npm run pre-build || true
+        run: npm run pre-build
 
       - name: Ensure CocoaPods
-        if: ${{ inputs.demoMode != 'true' }}
         run: |
           brew install cocoapods || true
           npm run ios:cocoapod
 
       - name: Import code signing certs
-        if: ${{ inputs.demoMode != 'true' }}
         uses: apple-actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.IOS_P12_BASE64 }}
           p12-password: ${{ secrets.IOS_P12_PASSWORD }}
 
       - name: Import provisioning profiles
-        if: ${{ inputs.demoMode != 'true' }}
         uses: apple-actions/import-provisioning-profiles@v1
         with:
           profiles-base64: ${{ secrets.IOS_MOBILEPROVISION_BASE64 }}
 
       - name: Pod install
-        if: ${{ inputs.demoMode != 'true' }}
         working-directory: ios
         run: pod install --quiet
 
       - name: Build and archive
-        if: ${{ inputs.demoMode != 'true' }}
         run: |
           set -euo pipefail
           mkdir -p "$EXPORT_PATH" "$DERIVED_DATA_PATH" $(dirname "$ARCHIVE_PATH")
@@ -106,7 +95,6 @@ jobs:
             archive | xcpretty && exit ${PIPESTATUS[0]}
 
       - name: Create exportOptions.plist
-        if: ${{ inputs.demoMode != 'true' }}
         run: |
           set -euo pipefail
           METHOD="ad-hoc"
@@ -140,20 +128,12 @@ jobs:
           EOF
 
       - name: Export IPA
-        if: ${{ inputs.demoMode != 'true' }}
         run: |
           xcodebuild -exportArchive \
             -archivePath "$ARCHIVE_PATH" \
             -exportPath "$EXPORT_PATH" \
             -exportOptionsPlist exportOptions.plist | xcpretty && exit ${PIPESTATUS[0]}
           ls -la "$EXPORT_PATH"
-
-      - name: Create placeholder IPA (demo mode)
-        if: ${{ inputs.demoMode == 'true' }}
-        run: |
-          mkdir -p "$EXPORT_PATH"
-          echo "This is a demo placeholder IPA." > "$EXPORT_PATH/demo.txt"
-          zip -j "$EXPORT_PATH/demo.ipa" "$EXPORT_PATH/demo.txt"
 
       - name: Upload artifact (IPA)
         uses: actions/upload-artifact@v4
