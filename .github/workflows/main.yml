@@ -58,18 +58,18 @@ jobs:
             echo "No ios:cocoapod script → skipping"
           fi
 
-      - name: Import code signing certs
-        uses: apple-actions/import-codesign-certs@v3
-        with:
-          p12-file-base64: ${{ secrets.IOS_P12_BASE64 }}
-          p12-password: ${{ secrets.IOS_P12_PASSWORD }}
+    #   - name: Import code signing certs
+    #     uses: apple-actions/import-codesign-certs@v3
+    #     with:
+    #       p12-file-base64: ${{ secrets.IOS_P12_BASE64 }}
+    #       p12-password: ${{ secrets.IOS_P12_PASSWORD }}
 
-      - name: Install provisioning profile
-        env:
-          IOS_MOBILEPROVISION_BASE64: ${{ secrets.IOS_MOBILEPROVISION_BASE64 }}
-        run: |
-          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          echo "$IOS_MOBILEPROVISION_BASE64" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision"
+    #   - name: Install provisioning profile
+    #     env:
+    #       IOS_MOBILEPROVISION_BASE64: ${{ secrets.IOS_MOBILEPROVISION_BASE64 }}
+    #     run: |
+    #       mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+    #       echo "$IOS_MOBILEPROVISION_BASE64" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision"
 
       - name: Pod install
         working-directory: ios
