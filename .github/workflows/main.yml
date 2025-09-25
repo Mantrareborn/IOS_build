@@ -2,27 +2,7 @@ name: iOS Build
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: Deployment environment (tst|acc|store)
-        required: true
-        default: tst
-      configuration:
-        description: Xcode configuration (e.g. Acceptance or Release)
-        required: true
-        default: Release
-      xcWorkspacePath:
-        description: Path to .xcworkspace (e.g. ios/MyLuminus.xcworkspace)
-        required: true
-        default: ios/MyLuminus.xcworkspace
-      scheme:
-        description: Xcode scheme (e.g. MyLuminus)
-        required: true
-        default: MyLuminus
-      xcodeVersion:
-        description: Xcode app folder name to select (e.g. Xcode_16.4.app). Leave empty to keep default
-        required: false
-        default: ""
+    
 
 permissions:
   actions: read
@@ -32,23 +12,17 @@ jobs:
   build:
     runs-on: macos-14
     env:
-      CONFIGURATION: ${{ inputs.configuration }}
-      WORKSPACE: ${{ inputs.xcWorkspacePath }}
-      SCHEME: ${{ inputs.scheme }}
-      ENVIRONMENT: ${{ inputs.environment }}
+      CONFIGURATION: Release
+      WORKSPACE: ios/MyLuminus.xcworkspace
+      SCHEME: MyLuminus
+      ENVIRONMENT: tst
       ARTIFACT_NAME: ios-ipa
-      ARCHIVE_PATH: output/archive/${{ inputs.scheme }}.xcarchive
+      ARCHIVE_PATH: output/archive/MyLuminus.xcarchive
       EXPORT_PATH: output/package
       DERIVED_DATA_PATH: output/DerivedData
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Select Xcode version (optional)
-        if: ${{ inputs.xcodeVersion != '' }}
-        run: |
-          sudo xcode-select -s "/Applications/${{ inputs.xcodeVersion }}"
-          xcodebuild -version
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -72,10 +46,12 @@ jobs:
           p12-file-base64: ${{ secrets.IOS_P12_BASE64 }}
           p12-password: ${{ secrets.IOS_P12_PASSWORD }}
 
-      - name: Import provisioning profiles
-        uses: apple-actions/import-provisioning-profiles@v1
-        with:
-          profiles-base64: ${{ secrets.IOS_MOBILEPROVISION_BASE64 }}
+      - name: Install provisioning profile
+        env:
+          IOS_MOBILEPROVISION_BASE64: ${{ secrets.IOS_MOBILEPROVISION_BASE64 }}
+        run: |
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "$IOS_MOBILEPROVISION_BASE64" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision"
 
       - name: Pod install
         working-directory: ios
