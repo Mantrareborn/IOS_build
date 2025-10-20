@@ -1,0 +1,74 @@
+# fastlane/Fastfile
+default_platform(:ios)
+
+# Load ENV-specific config via `--env tst|acc|store`
+# Example .env.tst keys used below:
+# SCHEME, CONFIGURATION, WORKSPACE, EXPORT_METHOD, TEAM_ID, BUNDLE_ID
+
+platform :ios do
+  desc "Common CI prep: keychain + cocoapods (optional)"
+  private_lane :ci_prep do
+    setup_ci # temp keychain on CI
+    # If you use CocoaPods:
+    # sh("pod install")
+  end
+
+  # Import cert & profile from files created by the workflow
+  private_lane :install_signing do
+    create_keychain(
+      name: "ci-temp",
+      default_keychain: true,
+      password: "",
+      timeout: 3600,
+      lock_when_sleeps: true
+    )
+
+    # CERT_P12_PATH and CERT_P12_PASSWORD set by workflow
+    import_certificate(
+      certificate_path: ENV["CERT_P12_PATH"],
+      certificate_password: ENV["CERT_P12_PASSWORD"]
+    )
+
+    # PROVISION_PATH set by workflow
+    install_provisioning_profile(
+      path: ENV["PROVISION_PATH"]
+    )
+  end
+
+  # Build only (IPA)
+  lane :build do
+    ci_prep
+    install_signing
+
+    build_app(
+      workspace: ENV["WORKSPACE"],        # e.g., ios/my-luminus.xcworkspace
+      scheme: ENV["SCHEME"],              # e.g., Acceptance or MyLuminus
+      configuration: ENV["CONFIGURATION"],# e.g., Acceptance or Release
+      export_method: ENV["EXPORT_METHOD"] || "app-store", # matches your AppStore/TestFlight use
+      export_options: {
+        provisioningProfiles: {
+          ENV["BUNDLE_ID"] => ENV["PROVISION_PROFILE_NAME"] || "" # optional
+        }
+      }
+    )
+  end
+
+  # Build + upload to TestFlight
+  lane :deploy do
+    build
+
+    # App Store Connect key values provided by workflow env
+    app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["ASC_KEY_P8"],
+      is_key_content_base64: true
+    )
+
+    upload_to_testflight(
+      # You can tweak distribution flags as you need
+      distribute_external: false
+    )
+  end
+end
+
