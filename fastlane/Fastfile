@@ -12,8 +12,9 @@ platform :ios do
     # Create a simple iOS app structure
     sh("mkdir -p ios/SimpleApp")
     
-    # Create a simple Swift file
-    File.write("ios/SimpleApp/AppDelegate.swift", <<~SWIFT
+    # Create a simple Swift file using shell commands
+    sh(<<~BASH
+      cat > ios/SimpleApp/AppDelegate.swift << 'EOF'
       import UIKit
 
       @main
@@ -22,11 +23,13 @@ platform :ios do
               return true
           }
       }
-    SWIFT
+      EOF
+    BASH
     )
     
     # Create a simple ViewController
-    File.write("ios/SimpleApp/ViewController.swift", <<~SWIFT
+    sh(<<~BASH
+      cat > ios/SimpleApp/ViewController.swift << 'EOF'
       import UIKit
 
       class ViewController: UIViewController {
@@ -46,19 +49,21 @@ platform :ios do
               ])
           }
       }
-    SWIFT
+      EOF
+    BASH
     )
     
     # Create Info.plist
-    File.write("ios/SimpleApp/Info.plist", <<~XML
+    sh(<<~BASH
+      cat > ios/SimpleApp/Info.plist << 'EOF'
       <?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
       <plist version="1.0">
       <dict>
           <key>CFBundleDevelopmentRegion</key>
-          <string>$(DEVELOPMENT_LANGUAGE)</string>
+          <string>\$(DEVELOPMENT_LANGUAGE)</string>
           <key>CFBundleExecutable</key>
-          <string>$(EXECUTABLE_NAME)</string>
+          <string>\$(EXECUTABLE_NAME)</string>
           <key>CFBundleIdentifier</key>
           <string>com.example.SimpleApp</string>
           <key>CFBundleInfoDictionaryVersion</key>
@@ -81,11 +86,18 @@ platform :ios do
           </array>
       </dict>
       </plist>
-    XML
+      EOF
+    BASH
     )
+    
+    # Verify files were created
+    sh("ls -la ios/SimpleApp/")
     
     # Create a simple IPA-like archive for demonstration
     sh("cd ios && zip -r ../build/SimpleApp.ipa SimpleApp/")
+    
+    # Verify the IPA was created
+    sh("ls -la build/")
     
     UI.success "✅ POC iOS app created successfully!"
     UI.message "📱 This demonstrates GitHub Actions can build iOS apps with Fastlane"
