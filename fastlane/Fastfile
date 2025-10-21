@@ -12,92 +12,54 @@ platform :ios do
     # Create a simple iOS app structure
     sh("mkdir -p ios/SimpleApp")
     
-    # Create a simple Swift file using shell commands
-    sh(<<~BASH
-      cat > ios/SimpleApp/AppDelegate.swift << 'EOF'
-      import UIKit
-
-      @main
-      class AppDelegate: UIResponder, UIApplicationDelegate {
-          func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-              return true
-          }
-      }
-      EOF
-    BASH
-    )
+    # Create files using echo commands (more reliable)
+    sh("echo 'import UIKit' > ios/SimpleApp/AppDelegate.swift")
+    sh("echo '' >> ios/SimpleApp/AppDelegate.swift")
+    sh("echo '@main' >> ios/SimpleApp/AppDelegate.swift")
+    sh("echo 'class AppDelegate: UIResponder, UIApplicationDelegate {' >> ios/SimpleApp/AppDelegate.swift")
+    sh("echo '    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {' >> ios/SimpleApp/AppDelegate.swift")
+    sh("echo '        return true' >> ios/SimpleApp/AppDelegate.swift")
+    sh("echo '    }' >> ios/SimpleApp/AppDelegate.swift")
+    sh("echo '}' >> ios/SimpleApp/AppDelegate.swift")
     
-    # Create a simple ViewController
-    sh(<<~BASH
-      cat > ios/SimpleApp/ViewController.swift << 'EOF'
-      import UIKit
-
-      class ViewController: UIViewController {
-          override func viewDidLoad() {
-              super.viewDidLoad()
-              view.backgroundColor = .systemBlue
-              let label = UILabel()
-              label.text = "Hello from GitHub Actions! 🚀"
-              label.textAlignment = .center
-              label.textColor = .white
-              label.font = UIFont.systemFont(ofSize: 24)
-              label.translatesAutoresizingMaskIntoConstraints = false
-              view.addSubview(label)
-              NSLayoutConstraint.activate([
-                  label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                  label.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-              ])
-          }
-      }
-      EOF
-    BASH
-    )
+    # Create ViewController
+    sh("echo 'import UIKit' > ios/SimpleApp/ViewController.swift")
+    sh("echo '' >> ios/SimpleApp/ViewController.swift")
+    sh("echo 'class ViewController: UIViewController {' >> ios/SimpleApp/ViewController.swift")
+    sh("echo '    override func viewDidLoad() {' >> ios/SimpleApp/ViewController.swift")
+    sh("echo '        super.viewDidLoad()' >> ios/SimpleApp/ViewController.swift")
+    sh("echo '        print(\"Hello from GitHub Actions! 🚀\")' >> ios/SimpleApp/ViewController.swift")
+    sh("echo '    }' >> ios/SimpleApp/ViewController.swift")
+    sh("echo '}' >> ios/SimpleApp/ViewController.swift")
     
     # Create Info.plist
-    sh(<<~BASH
-      cat > ios/SimpleApp/Info.plist << 'EOF'
-      <?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-      <plist version="1.0">
-      <dict>
-          <key>CFBundleDevelopmentRegion</key>
-          <string>\$(DEVELOPMENT_LANGUAGE)</string>
-          <key>CFBundleExecutable</key>
-          <string>\$(EXECUTABLE_NAME)</string>
-          <key>CFBundleIdentifier</key>
-          <string>com.example.SimpleApp</string>
-          <key>CFBundleInfoDictionaryVersion</key>
-          <string>6.0</string>
-          <key>CFBundleName</key>
-          <string>SimpleApp</string>
-          <key>CFBundlePackageType</key>
-          <string>APPL</string>
-          <key>CFBundleShortVersionString</key>
-          <string>1.0</string>
-          <key>CFBundleVersion</key>
-          <string>1</string>
-          <key>LSRequiresIPhoneOS</key>
-          <true/>
-          <key>UISupportedInterfaceOrientations</key>
-          <array>
-              <string>UIInterfaceOrientationPortrait</string>
-              <string>UIInterfaceOrientationLandscapeLeft</string>
-              <string>UIInterfaceOrientationLandscapeRight</string>
-          </array>
-      </dict>
-      </plist>
-      EOF
-    BASH
-    )
+    sh("echo '<?xml version=\"1.0\" encoding=\"UTF-8\"?>' > ios/SimpleApp/Info.plist")
+    sh("echo '<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">' >> ios/SimpleApp/Info.plist")
+    sh("echo '<plist version=\"1.0\">' >> ios/SimpleApp/Info.plist")
+    sh("echo '<dict>' >> ios/SimpleApp/Info.plist")
+    sh("echo '    <key>CFBundleIdentifier</key>' >> ios/SimpleApp/Info.plist")
+    sh("echo '    <string>com.example.SimpleApp</string>' >> ios/SimpleApp/Info.plist")
+    sh("echo '    <key>CFBundleName</key>' >> ios/SimpleApp/Info.plist")
+    sh("echo '    <string>SimpleApp</string>' >> ios/SimpleApp/Info.plist")
+    sh("echo '    <key>CFBundleVersion</key>' >> ios/SimpleApp/Info.plist")
+    sh("echo '    <string>1.0</string>' >> ios/SimpleApp/Info.plist")
+    sh("echo '</dict>' >> ios/SimpleApp/Info.plist")
+    sh("echo '</plist>' >> ios/SimpleApp/Info.plist")
     
     # Verify files were created
+    sh("echo '=== Files in ios/SimpleApp/ ==='")
     sh("ls -la ios/SimpleApp/")
+    sh("echo '=== File contents ==='")
+    sh("cat ios/SimpleApp/AppDelegate.swift")
     
     # Create a simple IPA-like archive for demonstration
     sh("cd ios && zip -r ../build/SimpleApp.ipa SimpleApp/")
     
     # Verify the IPA was created
+    sh("echo '=== Files in build/ ==='")
     sh("ls -la build/")
+    sh("echo '=== IPA file size ==='")
+    sh("du -h build/SimpleApp.ipa")
     
     UI.success "✅ POC iOS app created successfully!"
     UI.message "📱 This demonstrates GitHub Actions can build iOS apps with Fastlane"
