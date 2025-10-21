@@ -87,9 +87,9 @@ platform :ios do
     # Create a simple IPA-like archive for demonstration
     sh("cd ios && zip -r ../build/SimpleApp.ipa SimpleApp/")
     
-    UI.success "✅ POC iOS app created successfully!"
-    UI.message "📱 This demonstrates GitHub Actions can build iOS apps with Fastlane"
-    UI.message "🎯 The IPA file has been created: build/SimpleApp.ipa"
+    UI.success "POC iOS app created successfully!"
+    UI.message "This demonstrates GitHub Actions can build iOS apps with Fastlane"
+    UI.message "The IPA file has been created: build/SimpleApp.ipa"
   end
 end
 
