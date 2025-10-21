@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-app-poc
-          path: "./build/SimpleApp.ipa"
+          path: "fastlane/build/SimpleApp.ipa"
           retention-days: 30
 
       - name: ✅ Build Complete
