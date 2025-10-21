@@ -12,35 +12,35 @@ on:
 
 jobs:
   build_ios_poc:
-    name: 🚀 Build iOS App
+    name: Build iOS App
     runs-on: macos-latest
     
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 🐍 Setup Ruby Environment
+      - name: Setup Ruby Environment
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: ⚡ Install Fastlane
+      - name: Install Fastlane
         run: |
           bundle install
           bundle exec fastlane --version
 
-      - name: 🏗️ Build iOS Application
+      - name: Build iOS Application
         run: bundle exec fastlane ios build_ipa
 
-      - name: 📦 Upload IPA Artifact
+      - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-app-poc
           path: "fastlane/build/SimpleApp.ipa"
           retention-days: 30
 
-      - name: ✅ Build Complete
+      - name: Build Complete
         run: echo "🎉 iOS POC build completed successfully!"
