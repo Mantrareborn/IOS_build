@@ -1,4 +1,4 @@
-name: 🍎 iOS POC Build with Fastlane
+name: iOS POC Build with Fastlane
 
 on:
   push:
