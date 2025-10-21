@@ -1,155 +1,46 @@
-name: iOS Build
+name: 🍎 iOS POC Build with Fastlane
 
 on:
+  push:
+    branches: [ main, master ]
   workflow_dispatch:
-    
-
-permissions:
-  actions: read
-  contents: read
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'development'
 
 jobs:
-  build:
-    runs-on: macos-14
-    env:
-      CONFIGURATION: Release
-      WORKSPACE: ios/MyLuminus.xcworkspace
-      SCHEME: MyLuminus
-      ENVIRONMENT: tst
-      ARTIFACT_NAME: ios-ipa
-      ARCHIVE_PATH: output/archive/MyLuminus.xcarchive
-      EXPORT_PATH: output/package
-      DERIVED_DATA_PATH: output/DerivedData
+  build_ios_poc:
+    name: 🚀 Build iOS App
+    runs-on: macos-latest
+    
     steps:
-      - name: Checkout
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          fetch-depth: 0
 
-      - name: Install npm dependencies
+      - name: 🐍 Setup Ruby Environment
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: ⚡ Install Fastlane
         run: |
-          if [ -f package-lock.json ]; then
-            echo "Found package-lock.json → running npm ci"
-            npm ci --legacy-peer-deps
-          elif [ -f package.json ]; then
-            echo "No package-lock.json but package.json exists → running npm install"
-            npm install --legacy-peer-deps
-          else
-            echo "No package.json → skipping npm install"
-          fi
+          bundle install
+          bundle exec fastlane --version
 
-      - name: Pre-build adjustments
-        run: |
-          if [ -f package.json ] && npm run | grep -qE '^\s*pre-build\s'; then
-            npm run pre-build
-          else
-            echo "No pre-build script → skipping"
-          fi
+      - name: 🏗️ Build iOS Application
+        run: bundle exec fastlane ios build_ipa
 
-      - name: Ensure CocoaPods
-        run: |
-          if [ -f package.json ] && npm run | grep -qE '^\s*ios:cocoapod\s'; then
-            brew install cocoapods || true
-            npm run ios:cocoapod || true
-          else
-            echo "No ios:cocoapod script → skipping"
-          fi
-
-    #   - name: Import code signing certs
-    #     uses: apple-actions/import-codesign-certs@v3
-    #     with:
-    #       p12-file-base64: ${{ secrets.IOS_P12_BASE64 }}
-    #       p12-password: ${{ secrets.IOS_P12_PASSWORD }}
-
-    #   - name: Install provisioning profile
-    #     env:
-    #       IOS_MOBILEPROVISION_BASE64: ${{ secrets.IOS_MOBILEPROVISION_BASE64 }}
-    #     run: |
-    #       mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-    #       echo "$IOS_MOBILEPROVISION_BASE64" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision"
-
-      - name: Pod install
-        working-directory: ios
-        run: |
-          if [ -f Podfile ]; then
-            pod install --quiet
-          else
-            echo "No Podfile → skipping pod install"
-          fi
-
-      - name: Build and archive
-        run: |
-          set -euo pipefail
-          mkdir -p "$EXPORT_PATH" "$DERIVED_DATA_PATH" $(dirname "$ARCHIVE_PATH")
-          if [ -f "$WORKSPACE" ]; then
-            xcodebuild \
-              -workspace "$WORKSPACE" \
-              -scheme "$SCHEME" \
-              -configuration "$CONFIGURATION" \
-              -sdk iphoneos \
-              -derivedDataPath "$DERIVED_DATA_PATH" \
-              -archivePath "$ARCHIVE_PATH" \
-              archive | xcpretty && exit ${PIPESTATUS[0]}
-          else
-            echo "Workspace $WORKSPACE not found → skipping build"
-          fi
-
-      - name: Create exportOptions.plist
-        run: |
-          set -euo pipefail
-          if [ ! -d "$(dirname \"$ARCHIVE_PATH\")" ] || [ ! -e "$ARCHIVE_PATH" ]; then
-            echo "Archive not found → skipping exportOptions generation"
-            exit 0
-          fi
-          METHOD="ad-hoc"
-          if [ "${ENVIRONMENT}" = "store" ]; then
-            METHOD="app-store"
-          fi
-          cat > exportOptions.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>${METHOD}</string>
-            <key>compileBitcode</key>
-            <false/>
-            <key>destination</key>
-            <string>export</string>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>stripSwiftSymbols</key>
-            <true/>
-            <key>teamID</key>
-            <string>${{ secrets.APPLE_TEAM_ID }}</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>${{ secrets.BUNDLE_IDENTIFIER }}</key>
-              <string>${{ secrets.PROVISIONING_PROFILE_NAME }}</string>
-            </dict>
-          </dict>
-          </plist>
-          EOF
-
-      - name: Export IPA
-        run: |
-          if [ -e "$ARCHIVE_PATH" ] && [ -f exportOptions.plist ]; then
-            xcodebuild -exportArchive \
-              -archivePath "$ARCHIVE_PATH" \
-              -exportPath "$EXPORT_PATH" \
-              -exportOptionsPlist exportOptions.plist | xcpretty && exit ${PIPESTATUS[0]}
-            ls -la "$EXPORT_PATH"
-          else
-            echo "No archive/export options → skipping export"
-          fi
-
-      - name: Upload artifact (IPA)
+      - name: 📦 Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: |
-            ${{ env.EXPORT_PATH }}/*.ipa
-          if-no-files-found: ignore
+          name: ios-app-poc
+          path: "./build/SimpleApp.ipa"
+          retention-days: 30
+
+      - name: ✅ Build Complete
+        run: echo "🎉 iOS POC build completed successfully!"
